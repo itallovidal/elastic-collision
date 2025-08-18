@@ -4,8 +4,8 @@
 #include <SFML/Graphics.hpp>
 #include <random>
 
-#define WINDOW_WIDTH 1920
-#define WINDOW_HEIGHT 1080
+#define WINDOW_WIDTH 800
+#define WINDOW_HEIGHT 600
 #define HALF_WINDOW_HEIGHT WINDOW_HEIGHT / 2
 #define HALF_WINDOW_WIDTH WINDOW_WIDTH / 2
 

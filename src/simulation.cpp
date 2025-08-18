@@ -7,14 +7,15 @@
 #include <cmath>
 #include "utility.cpp"
 
-#define BALL_COUNT 700 // limit for around 60 FPS
+#define BALL_COUNT 6
+#define MASS_MIN_NUMBER 100.f
+#define MASS_MAX_NUMBER 120.f
 
 class Particle
 {
     float mass;
     sf::Vector2f velocity = {
         120.f, 120.f};
-    float acceleration;
     int isSpawned = 0;
 
     sf::CircleShape shape;
@@ -23,8 +24,8 @@ public:
     Particle()
     {
         this->shape.setFillColor(sf::Color::White);
-        this->mass = getRandomNumber(1.f, 10.f);
-        float radius = sqrt(this->mass) * 2.f;
+        this->mass = getRandomNumber(MASS_MIN_NUMBER, MASS_MAX_NUMBER);
+        float radius = sqrt(this->mass) * 3.f;
         this->shape.setOrigin({radius, radius});
         this->shape.setRadius(radius);
     }
@@ -62,13 +63,12 @@ public:
     {
         // S = S₀ + v ⋅ t
         float x = this->shape.getPosition().x + this->velocity.x * deltaTime;
+        float y = this->shape.getPosition().y + this->velocity.y * deltaTime;
 
         if (x + this->radius() >= WINDOW_WIDTH || x - this->radius() <= 0)
         {
             this->velocity.x *= -1;
         }
-
-        float y = this->shape.getPosition().y + this->velocity.y * deltaTime;
 
         if (y + this->radius() >= WINDOW_HEIGHT || y - this->radius() <= 0)
         {
@@ -88,75 +88,14 @@ public:
         return points;
     }
 
-    int handleCollision(Particle *other)
+    void setPosition(sf::Vector2f newPosition)
     {
-        float xDistance = abs(this->getCenterPoint().x - other->getCenterPoint().x);
-        float yDistance = abs(this->getCenterPoint().y - other->getCenterPoint().y);
-
-        // a² + b² = c²
-        float h = (xDistance * xDistance) + (yDistance * yDistance);
-        float distance = sqrt(h);
-
-        float sumOfRadius = this->radius() + other->radius();
-
-        if (distance <= sumOfRadius)
-        {
-            this->handleImpact(other, distance);
-            return 1;
-        }
-
-        return 0;
+        this->shape.setPosition(newPosition);
     }
 
-    void handleImpact(Particle *other, float distance)
+    void setVelocity(sf::Vector2f newVelocity)
     {
-        float idealLineOfImpact = this->radius() + other->radius();
-        sf::Vector2f centerPoint = this->getCenterPoint();
-        sf::Vector2f otherCenterPoint = other->getCenterPoint();
-
-        if (distance < idealLineOfImpact)
-        {
-            std::cout << "Overlaping!" << "\n";
-            float overlap = (idealLineOfImpact - distance) / 2;
-            sf::Vector2f direction;
-            if (distance != 0.f)
-            {
-                direction = (other->getCenterPoint() - this->getCenterPoint()) / distance;
-            }
-            else
-            {
-                direction = sf::Vector2f(1.f, 0.f);
-            }
-            sf::Vector2f normalizedDirection = direction;
-            this->shape.setPosition(this->getCenterPoint() - normalizedDirection * overlap);
-            other->shape.setPosition(other->getCenterPoint() + normalizedDirection * overlap);
-        }
-
-        // Particle 1
-        float massFactor = 2.f * other->getMass() / (this->getMass() + other->getMass());
-        sf::Vector2f relativeVelocity = other->getVelocity() - this->getVelocity();
-        sf::Vector2f lineOfImpact = other->getCenterPoint() - this->getCenterPoint();
-
-        float scalarProjectionNumerator = (relativeVelocity.x * lineOfImpact.x) + (relativeVelocity.y * lineOfImpact.y);
-        float scalarProjectionDenominator = (lineOfImpact.x * lineOfImpact.x) + (lineOfImpact.y * lineOfImpact.y);
-
-        float scalarProjection = scalarProjectionNumerator / scalarProjectionDenominator;
-        sf::Vector2f v1Prime = this->getVelocity() + massFactor * scalarProjection * lineOfImpact;
-
-        this->velocity = v1Prime;
-
-        // Particle 1
-        float massFactor2 = 2.f * this->getMass() / (this->getMass() + other->getMass());
-        sf::Vector2f relativeVelocity2 = this->getVelocity() - other->getVelocity();
-        sf::Vector2f lineOfImpact2 = this->getCenterPoint() - other->getCenterPoint();
-
-        float scalarProjectionNumerator2 = (relativeVelocity2.x * lineOfImpact2.x) + (relativeVelocity2.y * lineOfImpact2.y);
-        float scalarProjectionDenominator2 = (lineOfImpact2.x * lineOfImpact2.x) + (lineOfImpact2.y * lineOfImpact2.y);
-
-        float scalarProjection2 = scalarProjectionNumerator2 / scalarProjectionDenominator2;
-        sf::Vector2f v2Prime = other->getVelocity() + massFactor2 * scalarProjection2 * lineOfImpact2;
-
-        other->velocity = v2Prime;
+        this->velocity = newVelocity;
     }
 };
 
@@ -183,8 +122,77 @@ public:
 
             for (int j = i + 1; j < this->particles.size(); j++)
             {
-                this->particles[i].handleCollision(&this->particles[j]);
+                this->handleCollision(&this->particles[i], &this->particles[j]);
             }
         }
+    }
+
+    void handleCollision(Particle *particleA, Particle *particleB)
+    {
+        float xDistance = abs(particleA->getCenterPoint().x - particleB->getCenterPoint().x);
+        float yDistance = abs(particleA->getCenterPoint().y - particleB->getCenterPoint().y);
+
+        // a² + b² = c²
+        float h = (xDistance * xDistance) + (yDistance * yDistance);
+        float distance = sqrt(h);
+
+        float sumOfRadius = particleA->radius() + particleB->radius();
+
+        if (distance <= sumOfRadius)
+        {
+            this->handleImpact(particleA, particleB, distance);
+        }
+    }
+
+    void handleImpact(Particle *particleA, Particle *particleB, float distance)
+    {
+        float idealLineOfImpact = particleA->radius() + particleB->radius();
+        sf::Vector2f centerPoint = particleA->getCenterPoint();
+        sf::Vector2f particleBCenterPoint = particleB->getCenterPoint();
+
+        if (distance < idealLineOfImpact)
+        {
+            std::cout << "Overlaping!" << "\n";
+            float overlap = (idealLineOfImpact - distance) / 2;
+            sf::Vector2f direction;
+            if (distance != 0.f)
+            {
+                direction = (particleB->getCenterPoint() - particleA->getCenterPoint()) / distance;
+            }
+            else
+            {
+                direction = sf::Vector2f(1.f, 0.f);
+            }
+
+            sf::Vector2f normalizedDirection = direction;
+            particleA->setPosition(particleA->getCenterPoint() - normalizedDirection * overlap);
+            particleB->setPosition(particleB->getCenterPoint() + normalizedDirection * overlap);
+        }
+
+        // Particle 1
+        float massFactor = 2.f * particleB->getMass() / (particleA->getMass() + particleB->getMass());
+        sf::Vector2f relativeVelocity = particleB->getVelocity() - particleA->getVelocity();
+        sf::Vector2f lineOfImpact = particleB->getCenterPoint() - particleA->getCenterPoint();
+
+        float scalarProjectionNumerator = (relativeVelocity.x * lineOfImpact.x) + (relativeVelocity.y * lineOfImpact.y);
+        float scalarProjectionDenominator = (lineOfImpact.x * lineOfImpact.x) + (lineOfImpact.y * lineOfImpact.y);
+
+        float scalarProjection = scalarProjectionNumerator / scalarProjectionDenominator;
+        sf::Vector2f v1Prime = particleA->getVelocity() + massFactor * scalarProjection * lineOfImpact;
+
+        particleA->setVelocity(v1Prime);
+
+        // Particle 1
+        float massFactor2 = 2.f * particleA->getMass() / (particleA->getMass() + particleB->getMass());
+        sf::Vector2f relativeVelocity2 = particleA->getVelocity() - particleB->getVelocity();
+        sf::Vector2f lineOfImpact2 = particleA->getCenterPoint() - particleB->getCenterPoint();
+
+        float scalarProjectionNumerator2 = (relativeVelocity2.x * lineOfImpact2.x) + (relativeVelocity2.y * lineOfImpact2.y);
+        float scalarProjectionDenominator2 = (lineOfImpact2.x * lineOfImpact2.x) + (lineOfImpact2.y * lineOfImpact2.y);
+
+        float scalarProjection2 = scalarProjectionNumerator2 / scalarProjectionDenominator2;
+        sf::Vector2f v2Prime = particleB->getVelocity() + massFactor2 * scalarProjection2 * lineOfImpact2;
+
+        particleB->setVelocity(v2Prime);
     }
 };
