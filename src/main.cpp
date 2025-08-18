@@ -41,7 +41,7 @@ int main()
 
         window.clear();
 
-        simulation.start(deltaTime);
+        simulation.update(deltaTime);
         fpsCounter.showFPS(window);
 
         window.display();
