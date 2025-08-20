@@ -140,27 +140,14 @@ public:
 
         if (distance <= sumOfRadius)
         {
+            std::cout << "Collision Ocurred!" << "\n";
             this->handleImpact(particleA, particleB, distance);
         }
     }
 
     void handleImpact(Particle *particleA, Particle *particleB, float distance)
     {
-        float idealDistance = particleA->radius() + particleB->radius();
-
-        if (distance < idealDistance)
-        {
-            std::cout << "Overlaping!" << "\n";
-            float overlap = (idealDistance - distance);
-            sf::Vector2f direction = particleB->getCenterPoint() - particleA->getCenterPoint();
-
-            sf::Vector2f normalizedDirection = direction / distance;
-
-            sf::Vector2f pushBack = normalizedDirection * (overlap / 2);
-
-            particleA->setPosition(particleA->getCenterPoint() - pushBack);
-            particleB->setPosition(particleB->getCenterPoint() + pushBack);
-        }
+        this->handleOverlap(particleA, particleB, distance);
 
         // Particle 1
         float massFactor = 2.f * particleB->getMass() / (particleA->getMass() + particleB->getMass());
@@ -186,5 +173,26 @@ public:
 
         particleA->setVelocity(v1Prime);
         particleB->setVelocity(v2Prime);
+    }
+
+    void handleOverlap(Particle *particleA, Particle *particleB, float distance)
+    {
+        float idealDistance = particleA->radius() + particleB->radius();
+
+        if (distance >= idealDistance)
+        {
+            return;
+        }
+
+        std::cout << "Overlaping!" << "\n";
+        float overlap = (idealDistance - distance);
+
+        sf::Vector2f direction = particleB->getCenterPoint() - particleA->getCenterPoint();
+        sf::Vector2f normalizedDirection = direction / distance;
+        sf::Vector2f pushBack = normalizedDirection * (overlap / 2);
+
+        particleA->setPosition(particleA->getCenterPoint() - pushBack);
+        particleB->setPosition(particleB->getCenterPoint() + pushBack);
+        return;
     }
 };

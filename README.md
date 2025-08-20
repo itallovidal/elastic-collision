@@ -61,17 +61,17 @@ A função update é responsável por atualizar a posição das partículas no m
 
 ```c
 void update(float deltaTime)
+{
+    for (int i = 0; i < this->particles.size(); i++)
     {
-        for (int i = 0; i < this->particles.size(); i++)
-        {
-            this->window.draw(this->particles[i].spawn(deltaTime));
+        this->window.draw(this->particles[i].spawn(deltaTime));
 
-            for (int j = i + 1; j < this->particles.size(); j++)
-            {
-                this->particles[i].handleCollision(&this->particles[j]);
-            }
+        for (int j = i + 1; j < this->particles.size(); j++)
+        {
+            this->handleCollision(&this->particles[i], &this->particles[j]);
         }
     }
+}
 ```
 
 # Colision Detection
@@ -138,24 +138,24 @@ Caso estejam, precisamos pegar o tamanho desse overlap e afastar as partículas 
 > - Precisamos afastar cada partícula em 1.5 de distância.
 
 ```c
-float idealDistance = particleA->radius() + particleB->radius();
-
-if (distance < idealDistance)
+void handleOverlap(Particle *particleA, Particle *particleB, float distance)
 {
-    std::cout << "Overlaping!" << "\n";
-    float overlap = (idealDistance - distance) / 2;
-    sf::Vector2f direction;
-    if (distance != 0.f)
+    float idealDistance = particleA->radius() + particleB->radius();
+
+    if (distance >= idealDistance)
     {
-        direction = (particleB->getCenterPoint() - particleA->getCenterPoint()) / distance;
-    }
-    else
-    {
-        direction = sf::Vector2f(1.f, 0.f);
+        return;
     }
 
-    sf::Vector2f normalizedDirection = direction;
-    particleA->setPosition(particleA->getCenterPoint() - normalizedDirection * overlap);
-    particleB->setPosition(particleB->getCenterPoint() + normalizedDirection * overlap);
+    std::cout << "Overlaping!" << "\n";
+    float overlap = (idealDistance - distance);
+
+    sf::Vector2f direction = particleB->getCenterPoint() - particleA->getCenterPoint();
+    sf::Vector2f normalizedDirection = direction / distance;
+    sf::Vector2f pushBack = normalizedDirection * (overlap / 2);
+
+    particleA->setPosition(particleA->getCenterPoint() - pushBack);
+    particleB->setPosition(particleB->getCenterPoint() + pushBack);
+    return;
 }
 ```
