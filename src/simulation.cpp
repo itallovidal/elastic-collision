@@ -146,27 +146,20 @@ public:
 
     void handleImpact(Particle *particleA, Particle *particleB, float distance)
     {
-        float idealLineOfImpact = particleA->radius() + particleB->radius();
-        sf::Vector2f centerPoint = particleA->getCenterPoint();
-        sf::Vector2f particleBCenterPoint = particleB->getCenterPoint();
+        float idealDistance = particleA->radius() + particleB->radius();
 
-        if (distance < idealLineOfImpact)
+        if (distance < idealDistance)
         {
             std::cout << "Overlaping!" << "\n";
-            float overlap = (idealLineOfImpact - distance) / 2;
-            sf::Vector2f direction;
-            if (distance != 0.f)
-            {
-                direction = (particleB->getCenterPoint() - particleA->getCenterPoint()) / distance;
-            }
-            else
-            {
-                direction = sf::Vector2f(1.f, 0.f);
-            }
+            float overlap = (idealDistance - distance);
+            sf::Vector2f direction = particleB->getCenterPoint() - particleA->getCenterPoint();
 
-            sf::Vector2f normalizedDirection = direction;
-            particleA->setPosition(particleA->getCenterPoint() - normalizedDirection * overlap);
-            particleB->setPosition(particleB->getCenterPoint() + normalizedDirection * overlap);
+            sf::Vector2f normalizedDirection = direction / distance;
+
+            sf::Vector2f pushBack = normalizedDirection * (overlap / 2);
+
+            particleA->setPosition(particleA->getCenterPoint() - pushBack);
+            particleB->setPosition(particleB->getCenterPoint() + pushBack);
         }
 
         // Particle 1
@@ -180,9 +173,7 @@ public:
         float scalarProjection = scalarProjectionNumerator / scalarProjectionDenominator;
         sf::Vector2f v1Prime = particleA->getVelocity() + massFactor * scalarProjection * lineOfImpact;
 
-        particleA->setVelocity(v1Prime);
-
-        // Particle 1
+        // Particle 2
         float massFactor2 = 2.f * particleA->getMass() / (particleA->getMass() + particleB->getMass());
         sf::Vector2f relativeVelocity2 = particleA->getVelocity() - particleB->getVelocity();
         sf::Vector2f lineOfImpact2 = particleA->getCenterPoint() - particleB->getCenterPoint();
@@ -193,6 +184,7 @@ public:
         float scalarProjection2 = scalarProjectionNumerator2 / scalarProjectionDenominator2;
         sf::Vector2f v2Prime = particleB->getVelocity() + massFactor2 * scalarProjection2 * lineOfImpact2;
 
+        particleA->setVelocity(v1Prime);
         particleB->setVelocity(v2Prime);
     }
 };

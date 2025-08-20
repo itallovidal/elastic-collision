@@ -88,7 +88,7 @@ A questão do momento é:
 
 A resposta é simples: pitágoras. 
 
-![alt text](image.png)
+![alt text](src/assets/readme/pythagorean.png)
 
 Subtraímos o local de um círculo pelo outro para capturarmos X,Y e assim fica fácil achar a hipotenusa.
 
@@ -113,3 +113,49 @@ Subtraímos o local de um círculo pelo outro para capturarmos X,Y e assim fica 
 
 # Collision Resolution
 
+Após sabermos que as partículas colidiram, precisamos calcular sua nova direção. A direção é o resultado do conjunto das velocidades dos seus eixos. 
+
+### Overlaping
+
+No momento da colisão, é importante checarmos se as partículas estão sofrendo `overlaping` O que acontece é que pode ser que devido à alta velocidade, o deslocamento de posição entre um frame e outro faça com que as partículas fiquem em posições de modo a se sobrepor.
+
+![alt text](src/assets/readme/particle-overlaping.png)
+
+Devemos corrigir essa posição antes de fazermos os cálculos para não gerar bugs de colisão contínua - as partículas ficam "grudadas" colidindo infinitamente. 
+
+> A reta resultante da distância entre os pontos centrais é chamado de **linha de impacto.**
+
+Para saber se as partículas estão sofrendo com o `overlaping`, podemos verificar se a soma dos raios é maior do que a distância entre os pontos centrais das partículas.
+
+Caso estejam, precisamos pegar o tamanho desse overlap e afastar as partículas de modo que elas fiquem distantes o suficiente para encostarem, mas não se sobreporem.
+
+> - Partícula A -> raio 10
+> - Partícula B -> raio 5
+> - raio P.A 10 + raio P.B 5 = 15
+> - Distância entre os pontos centrais 12
+> - 12 é menor que 15 então elas estão se sobrepondo.
+> - 15 - 12 = 3 de overlap.
+> - Precisamos afastar cada partícula em 1.5 de distância.
+
+```c
+float idealDistance = particleA->radius() + particleB->radius();
+
+if (distance < idealDistance)
+{
+    std::cout << "Overlaping!" << "\n";
+    float overlap = (idealDistance - distance) / 2;
+    sf::Vector2f direction;
+    if (distance != 0.f)
+    {
+        direction = (particleB->getCenterPoint() - particleA->getCenterPoint()) / distance;
+    }
+    else
+    {
+        direction = sf::Vector2f(1.f, 0.f);
+    }
+
+    sf::Vector2f normalizedDirection = direction;
+    particleA->setPosition(particleA->getCenterPoint() - normalizedDirection * overlap);
+    particleB->setPosition(particleB->getCenterPoint() + normalizedDirection * overlap);
+}
+```
