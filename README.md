@@ -127,7 +127,7 @@ Devemos corrigir essa posição antes de fazermos os cálculos para não gerar b
 
 Para saber se as partículas estão sofrendo com o `overlaping`, podemos verificar se a soma dos raios é maior do que a distância entre os pontos centrais das partículas.
 
-Caso estejam, precisamos pegar o tamanho desse overlap e afastar as partículas de modo que elas fiquem distantes o suficiente para encostarem, mas não se sobreporem.
+Caso seja, precisamos pegar o tamanho desse overlap e afastar as partículas de modo que elas fiquem distantes o suficiente para encostarem, mas não se sobreporem.
 
 > - Partícula A -> raio 10
 > - Partícula B -> raio 5
@@ -136,6 +136,24 @@ Caso estejam, precisamos pegar o tamanho desse overlap e afastar as partículas 
 > - 12 é menor que 15 então elas estão se sobrepondo.
 > - 15 - 12 = 3 de overlap.
 > - Precisamos afastar cada partícula em 1.5 de distância.
+
+A questão é como sabemos quais eixos, para qual direção devemos empurras as partículas. Para sabermos isso, devemos normalizar o vetor da direção das partículas e depois multiplicá-lo pela metade do overlap. 
+
+### Magnitude e Normalização de vetores
+
+A magnitude (ou tamanho) é a medida do comprimento do segmento de reta gerado entre dois pontos. No nosso caso, é a distância entre a partícula A e B. Agora perceba: nós temos a direção dos centros, temos também o overlap, mas precisamos agora de um vetor que represente as cordenadas que geram esse overlap, no tamanho do overlap, na direcão da colisão dos dois círculos. 
+
+Para conseguirmos capturar esses pontos, precisamos normalizar o vetor de direção, para que possamos ter um vetor com apenas um só sentido e direção, mas com um comprimento de até 1. Normalizar retira a informação de comprimento, mantendo apenas a de direção.
+
+ A normalização de um vetor se dá pela fórmula: 
+- magnitude (ou comprimento) = $\sqrt{x^2 + y^2}$
+- vetor Normalizado = ($x/magnitude$ , $y/magnitude$)
+
+A distância de deslocamento necessária podemos calcular pegando cada eixo do vetor normalizado e multiplicando por metade do overlap. Metade pois estamos deslocando ambas as partículas, então cada partícula vai se afastar um pouco.
+
+- distância a ser corrigida: $( x * (overlap / 2) ,  y * (overlap / 2))$ 
+
+Isso nos dará o quanto que deveremos deslocar a partícula. A partícula A podemos empurrar para um lado e a partícula B para o outro.
 
 ```c
 void handleOverlap(Particle *particleA, Particle *particleB, float distance)
@@ -154,6 +172,9 @@ void handleOverlap(Particle *particleA, Particle *particleB, float distance)
     sf::Vector2f normalizedDirection = direction / distance;
     sf::Vector2f pushBack = normalizedDirection * (overlap / 2);
 
+    // aqui podemos usar setPosition() ou move() do próprio SFML
+    // mas estou usando set Position para ficar mais evidente o que 
+    // está acontecendo
     particleA->setPosition(particleA->getCenterPoint() - pushBack);
     particleB->setPosition(particleB->getCenterPoint() + pushBack);
     return;
