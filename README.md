@@ -77,7 +77,7 @@ void update(float deltaTime)
 }
 ```
 
-# Colision Detection
+# Collision Detection
 
 A verificação das colisões dentro da classe `simulation` se dá recebendo duas partículas, A e B a partir do seguinte cenário:
 
@@ -147,8 +147,9 @@ A magnitude (ou tamanho) é a medida do comprimento do segmento de reta gerado e
 Para conseguirmos capturar esses pontos, precisamos normalizar o vetor de direção, para que possamos ter um vetor com apenas um só sentido e direção, mas com um comprimento de até 1. Normalizar retira a informação de comprimento, mantendo apenas a de direção.
 
  A normalização de um vetor se dá pela fórmula: 
-- magnitude (ou comprimento) = $\sqrt{x^2 + y^2}$
-- vetor Normalizado = ($x/magnitude$ , $y/magnitude$)
+
+- magnitude (ou comprimento) = sqrt(x² + y²)
+- vetor normalizado = (x / magnitude, y / magnitude)
 
 A distância de deslocamento necessária podemos calcular pegando cada eixo do vetor normalizado e multiplicando por metade do overlap. Metade pois estamos deslocando ambas as partículas, então cada partícula vai se afastar um pouco.
 
@@ -256,20 +257,13 @@ Eu tenho um computador atualmente relativamente bom. Com meu computador atual, e
 
 ![alt text](/src/assets/readme/stress.gif)
 
-# Fontes de Estudo
 
+## Fontes de Estudo
 Conteúdo que foi valiosíssimo para o entendimento desse projeto:
 
-- https://dipamsen.github.io/notebook/page/collisions.pdf
-- https://en.wikipedia.org/wiki/Elastic_collision
-- https://spicyyoghurt.com/tutorials/html5-javascript-game-development/collision-detection-physics
-- https://www.youtube.com/watch?v=dJNFPv9Mj-Y&t=255s
-- https://happycoding.io/tutorials/processing/collision-detection
-- GPT e Gemini para explicar teoria matemática mais específica
+- [Elastic Collision (Wikipedia)](https://en.wikipedia.org/wiki/Elastic_collision)
+- [Dipam Sen – Collisions PDF](https://dipamsen.github.io/notebook/page/collisions.pdf)
+- [SpicyYoghurt – Collision Physics](https://spicyyoghurt.com/tutorials/html5-javascript-game-development/collision-detection-physics)
+- [HappyCoding – Collision Detection](https://happycoding.io/tutorials/processing/collision-detection)
+- [Vídeo explicativo](https://www.youtube.com/watch?v=dJNFPv9Mj-Y&t=255s)
 
-<style>
-    blockquote{
-        padding-block: .1rem;
-        margin-bottom: 1rem;
-    }
-</style>
