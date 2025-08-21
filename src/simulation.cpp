@@ -188,7 +188,7 @@ public:
         float overlap = (idealDistance - distance);
 
         sf::Vector2f direction = particleB->getCenterPoint() - particleA->getCenterPoint();
-        sf::Vector2f normalizedDirection = direction / distance;
+        sf::Vector2f normalizedDirection = direction / (distance > 0 ? distance : 1);
         sf::Vector2f pushBack = normalizedDirection * (overlap / 2);
 
         particleA->setPosition(particleA->getCenterPoint() - pushBack);

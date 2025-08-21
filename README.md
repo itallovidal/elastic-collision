@@ -1,5 +1,8 @@
 # Coding Challenge: Colisão Elástica
 
+![alt text](/src/assets/readme/preview.gif)
+
+
 Este projeto visa simular um sistema de colisão elástica entre bolinhas 2D e entender a física e a matemática relacionada para conseguir resolver os problemas ao longo do processo de implementação. Para o desenvolvimento desse projeto foram usadas as seguintes tecnologias:
 
 - C++
@@ -123,23 +126,21 @@ No momento da colisão, é importante checarmos se as partículas estão sofrend
 
 Devemos corrigir essa posição antes de fazermos os cálculos para não gerar bugs de colisão contínua - as partículas ficam "grudadas" colidindo infinitamente. 
 
-> A reta resultante da distância entre os pontos centrais é chamado de **linha de impacto.**
-
 Para saber se as partículas estão sofrendo com o `overlaping`, podemos verificar se a soma dos raios é maior do que a distância entre os pontos centrais das partículas.
 
 Caso seja, precisamos pegar o tamanho desse overlap e afastar as partículas de modo que elas fiquem distantes o suficiente para encostarem, mas não se sobreporem.
 
-> - Partícula A -> raio 10
-> - Partícula B -> raio 5
-> - raio P.A 10 + raio P.B 5 = 15
-> - Distância entre os pontos centrais 12
-> - 12 é menor que 15 então elas estão se sobrepondo.
-> - 15 - 12 = 3 de overlap.
-> - Precisamos afastar cada partícula em 1.5 de distância.
+> <br> Partícula A -> raio 10
+> <br> Partícula B -> raio 5
+> <br> Raio P.A 10 + raio P.B 5 = 15
+> <br> Distância entre os pontos centrais 12
+> <br> 12 é menor que 15 então elas estão se sobrepondo.
+> <br> 15 - 12 = 3 de overlap.
+> <br> Precisamos afastar cada partícula em 1.5 de distância.
 
 A questão é como sabemos quais eixos, para qual direção devemos empurras as partículas. Para sabermos isso, devemos normalizar o vetor da direção das partículas e depois multiplicá-lo pela metade do overlap. 
 
-### Magnitude e Normalização de vetores
+### Magnitude e Normalização de Vetores
 
 A magnitude (ou tamanho) é a medida do comprimento do segmento de reta gerado entre dois pontos. No nosso caso, é a distância entre a partícula A e B. Agora perceba: nós temos a direção dos centros, temos também o overlap, mas precisamos agora de um vetor que represente as cordenadas que geram esse overlap, no tamanho do overlap, na direcão da colisão dos dois círculos. 
 
@@ -151,7 +152,7 @@ Para conseguirmos capturar esses pontos, precisamos normalizar o vetor de direç
 
 A distância de deslocamento necessária podemos calcular pegando cada eixo do vetor normalizado e multiplicando por metade do overlap. Metade pois estamos deslocando ambas as partículas, então cada partícula vai se afastar um pouco.
 
-- distância a ser corrigida: $( x * (overlap / 2) ,  y * (overlap / 2))$ 
+- distância a ser corrigida: ( x * (overlap / 2) ,  y * (overlap / 2)) 
 
 Isso nos dará o quanto que deveremos deslocar a partícula. A partícula A podemos empurrar para um lado e a partícula B para o outro.
 
@@ -180,3 +181,95 @@ void handleOverlap(Particle *particleA, Particle *particleB, float distance)
     return;
 }
 ```
+
+Agora que identificamos o contato entre as partículas, devemos resolver outro problema: depois delas colidirem, qual será seu novo vetor de velocidade?
+
+Lembrando que o vetor de velocidade traduz consigo a direção no qual a partícula está se movendo. Como eu consigo saber para onde elas irão se mover depois de se chocarem?
+
+# Collision Resolution
+
+![alt text](src/assets/readme/collision-resolution.png)
+
+A Resolução de Colisão é a fórmula que busca responder essa questão. Eu não irei passar pelo processo matemático de como chegar nesse resultado porque não é o intuito aqui. Vou deixar vinculado no final deste documento as fontes e materiais de estudo com mais detalhes.
+
+O fato é que essa fórmula utiliza de muitos conceitos que nós já trabalhamos aqui como aritimética de vetores, e mais alguns outros interessantes que vale a pena entender.
+
+Conseguimos subdividir essa fórmula em três fórmulas menores de forma com que seja mais fácil de entender.
+
+### Mass Factor
+
+![alt text](/src/assets/readme/mass-factor.png)
+
+O fator de massas representa a influência na hora da colisão de um corpo no outro. A fórmula é simples e bem direta. Só temos que tomar cuidado com qual é a massa no numerador, pois isso vai afetar diretamente o resultado final. Se estamos calculando a influência da partícula B na partícula A, ou vice versa.
+
+
+```c
+float massFactor = 2.f * particleB->getMass() / (particleA->getMass() + particleB->getMass());
+```
+
+### Scalar Projection
+
+![alt text](/src/assets/readme/scalar-projection.png)
+
+A projeção escalar representa a velocidade na qual ambas as partículas estão se aproximando uma da outra ao longo da linha de impacto. Para entendermos melhor vamos separar tanto aqui quanto no código em denominador e numerador, assim fica mais fácil de entender.
+
+No númerador temos a velocidade relativa - que se dá entre a subtração dos vetores de velocidade - vezes a linha de impacto. 
+```c
+sf::Vector2f relativeVelocity = particleB->getVelocity() - particleA->getVelocity();
+```
+
+
+> Line of Impact <br>
+> -- 
+> Chamamos de Linha de Impacto a linha que corta os dois pontos centrais das partículas. Ela é o vetor que representa a distância entre a partícula A e B no momento da colisão.
+
+```c
+sf::Vector2f lineOfImpact = particleB->getCenterPoint() - particleA->getCenterPoint();
+```
+
+Já o numerador é a magnitude do vetor elevado ao quadrado. Uma coisa que é interessante observar aqui é que _magnitude e o módulo são sinônimos_. Enquanto o módulo de uma grandeza escalar é o número absoluto, o módulo de uma grandeza vetorial é seu comprimento.
+
+```c
+float scalarProjectionNumerator = (relativeVelocity.x * lineOfImpact.x) + (relativeVelocity.y * lineOfImpact.y);
+
+float scalarProjectionDenominator = (lineOfImpact.x * lineOfImpact.x) + (lineOfImpact.y * lineOfImpact.y);
+
+float scalarProjection = scalarProjectionNumerator / scalarProjectionDenominator;
+```
+# V'
+
+V Prime - ou V linha - é o resultado final, a nova velocidade depois de todos os cálculos. A terceira parte para capturarmos esse valor é juntar as três fórmulas:
+
+> Recapitulando
+>--
+> P1v' = Vetor de Velocidade inicial + Fator de Massas * Projeção Escalar * Linha de Impacto
+
+```c
+sf::Vector2f v1Prime = particleA->getVelocity() + massFactor * scalarProjection * lineOfImpact;
+``` 
+
+Lembrando que deve ser feito o cálculo tanto para a primeira partícula quanto para a segunda, se não apenas uma irá mudar de trajetória. 
+
+# Stress Test
+
+Eu tenho um computador atualmente relativamente bom. Com meu computador atual, eu consigo renderizar 800 partículas simultanemante à 30 FPS. Algo que pode ser MUITO melhorado, muito mesmo, caso eu implementasse um outro algoritmo para validação das colisões, como as Quadtrees. Mas isso fica para próxima. :D
+
+![alt text](/src/assets/readme/stress.gif)
+
+# Fontes de Estudo
+
+Conteúdo que foi valiosíssimo para o entendimento desse projeto:
+
+- https://dipamsen.github.io/notebook/page/collisions.pdf
+- https://en.wikipedia.org/wiki/Elastic_collision
+- https://spicyyoghurt.com/tutorials/html5-javascript-game-development/collision-detection-physics
+- https://www.youtube.com/watch?v=dJNFPv9Mj-Y&t=255s
+- https://happycoding.io/tutorials/processing/collision-detection
+- GPT e Gemini para explicar teoria matemática mais específica
+
+<style>
+    blockquote{
+        padding-block: .1rem;
+        margin-bottom: 1rem;
+    }
+</style>
