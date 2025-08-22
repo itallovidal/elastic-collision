@@ -7,7 +7,7 @@
 #include <cmath>
 #include "utility.cpp"
 
-#define BALL_COUNT 6
+#define BALL_COUNT 100
 #define MASS_MIN_NUMBER 100.f
 #define MASS_MAX_NUMBER 120.f
 
@@ -65,17 +65,10 @@ public:
         float x = this->shape.getPosition().x + this->velocity.x * deltaTime;
         float y = this->shape.getPosition().y + this->velocity.y * deltaTime;
 
-        if (x + this->radius() >= WINDOW_WIDTH || x - this->radius() <= 0)
-        {
-            this->velocity.x *= -1;
-        }
+        // handle tunneling
+        sf::Vector2f newPosition = this->handleTunneling({x, y});
 
-        if (y + this->radius() >= WINDOW_HEIGHT || y - this->radius() <= 0)
-        {
-            this->velocity.y *= -1;
-        }
-
-        this->shape.setPosition({x, y});
+        this->shape.setPosition(newPosition);
         return this->shape;
     }
 
@@ -96,6 +89,43 @@ public:
     void setVelocity(sf::Vector2f newVelocity)
     {
         this->velocity = newVelocity;
+    }
+
+    sf::Vector2f handleTunneling(sf::Vector2f coordenate)
+    {
+        if (coordenate.x + this->radius() > WINDOW_WIDTH)
+        {
+            this->velocity.x *= -1;
+            float overlap = coordenate.x + this->radius() - WINDOW_WIDTH;
+
+            coordenate.x -= overlap;
+        }
+
+        if (coordenate.x - this->radius() < 0)
+        {
+            this->velocity.x *= -1;
+            float overlap = abs((coordenate.x - this->radius()) + 0);
+
+            coordenate.x += overlap;
+        }
+
+        if (coordenate.y + this->radius() > WINDOW_HEIGHT)
+        {
+            this->velocity.y *= -1;
+            float overlap = coordenate.y + this->radius() - WINDOW_HEIGHT;
+
+            coordenate.y -= overlap;
+        }
+
+        if (coordenate.y - this->radius() < 0)
+        {
+            this->velocity.y *= -1;
+            float overlap = abs((coordenate.y - this->radius()) + 0);
+
+            coordenate.y += overlap;
+        }
+
+        return coordenate;
     }
 };
 

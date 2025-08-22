@@ -38,23 +38,54 @@ Nesse projetos utilizaremos a fórmula do MRU - Movimento Retilíneo Uniforme:
 
 - S = S₀ + v Δt
 
-Ou seja, a nova posição é igual a posição atual da partícula mais a velocidade vezes `deltatime` - que é inclusive passado como parâmetro pois ele é capturado a cada laço do looping da main.
+Ou seja, a nova posição é igual a posição atual da partícula mais a velocidade vezes `deltatime` - que é inclusive passado como parâmetro pois ele é capturado a cada laço do looping da main. Assim que sabemos a nova posição de cada eixo, devemos validar se esse novo ponto no espaço encosta ou não nas bordas da tela. Caso sim, invertemos a velocidade daquele eixo para a partícula voltar. 
 
-Assim que sabemos a nova posição de cada eixo, devemos validar se esse novo ponto no espaço encosta ou não nas bordas da tela. Caso sim, invertemos a velocidade daquele eixo para a partícula voltar.
+# Tunneling
+
+Um problema muito comum é a bola atualizar para uma posição além das bordas da janela. Esse problema é conhecido como Tunneling. Para corrigirmos isso, podemos simplesmente pegar a quantidade de espaço sobressalente e reposicionar a bola.
 
 ```c
-    if (x + this->radius() >= WINDOW_WIDTH || x - this->radius() <= 0)
+sf::Vector2f handleTunneling(sf::Vector2f coordenate)
+{
+    // para além da borda direita
+    if (coordenate.x + this->radius() > WINDOW_WIDTH)
     {
         this->velocity.x *= -1;
+        float overlap = coordenate.x + this->radius() - WINDOW_WIDTH;
+
+        coordenate.x -= overlap;
     }
 
-    if (y + this->radius() >= WINDOW_HEIGHT || y - this->radius() <= 0)
+    // para além da borda esquerda
+    if (coordenate.x - this->radius() < 0)
+    {
+        this->velocity.x *= -1;
+        float overlap = abs((coordenate.x - this->radius()) + 0);
+
+        coordenate.x += overlap;
+    }
+
+    // para além da borda na parte de baixo
+    if (coordenate.y + this->radius() > WINDOW_HEIGHT)
     {
         this->velocity.y *= -1;
+        float overlap = coordenate.y + this->radius() - WINDOW_HEIGHT;
+
+        coordenate.y -= overlap;
     }
 
-    this->shape.setPosition({x, y});
-    return this->shape;
+
+    // para além da borda no topo
+    if (coordenate.y - this->radius() < 0)
+    {
+        this->velocity.y *= -1;
+        float overlap = abs((coordenate.y - this->radius()) + 0);
+
+        coordenate.y += overlap;
+    }
+
+    return coordenate;
+}
 ```
 
 # Simulation Class
